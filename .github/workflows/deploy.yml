@@ -1,0 +1,50 @@
+name: Node.js CI (with a longer loop - STILL NOT recommended for long-term use)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Start application (with longer loop)
+        run: |
+          node -e '
+          const { spawn } = require("child_process");
+          const child = spawn("npm", ["start"]);
+
+          child.stdout.on("data", (data) => {
+            console.log(`stdout: ${data}`);
+          });
+
+          child.stderr.on("data", (data) => {
+            console.error(`stderr: ${data}`);
+          });
+
+          child.on("close", (code) => {
+            console.log(`child process exited with code ${code}`);
+          });
+
+          setInterval(()=>{
+            console.log("Still Running");
+          }, 600000); # 10 minutes
+          '
